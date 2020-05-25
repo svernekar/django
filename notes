@@ -1,0 +1,314 @@
+1.Create a virtual environment:
+     mkdir blogproj/venv
+     python3 -m venv blogproj/venv
+2.Activate venv
+    source blogproj/venv/bin/activate
+3.Install django
+		pip install django
+		python3 -m django --version
+4.django-admin startproject blog_project		
+	Open the project in pycharm
+	No changes will be made to manage.py
+	__init__.py  tells its a python package
+	settings.py  INSTALLED_APPS
+    url.py url_patterns will have to be changed
+	wsgi and asgi files will not be touched.
+5.python manage.py runserver
+    http://localhost:8000/admin/
+================================================================================================================
+Single project can have multiple apps
+1.django-admin startapp blog
+2.Go to blog directory->views.py
+	from django.http import HttpResponse
+	def home(request):
+		return HttpResponse('<h1> Blog 1</h1>')
+	def about(request):
+		return HttpResponse('<h1> Blog 1123</h1>')	
+3.Go to blog dir and create urls.py
+	ffrom django.urls import path
+	from . import views
+	urlpatterns = [
+		path(' ', views.home,name='blog-home'),
+		path(' about/', views.about,name='blog-about'),
+		]
+4.Go to projects urls.py
+			from django.urls import path, include
+
+
+			urlpatterns = [
+							path('admin/', admin.site.urls),
+							path('blog/', include('blog.urls')),    
+						]
+==========================================================================================================================================================================================================================================================================================================================================
+1.Create a dir template under blog,create a blog dir under template
+		create a home.html and about.html
+2.Now go to apps.py and copy BlogConfig
+   and go to settting.py in project dir ,paste the below
+	INSTALLED_APPS = [
+    'blog.apps.BlogConfig',
+3.Go to views.py
+	from django.shortcuts import render
+	# Create your views here.
+	def home(request):
+		return render(request,'blog/home.html')
+
+	def about(request):
+		return render(request,'blog/about.html')
+4.Create a database,go to views.py and paste the below:
+						from django.shortcuts import render
+
+						posts= [
+							{
+								'author':"Vanaja",
+								'title':"One happy day",
+								'content':"How did that day go!!!!!!!!",
+								'date_posted':'May,24 2020'
+							},
+
+							{
+								'author': "Shreya",
+								'title': "Second happy day",
+								'content': "How did that day go!!!!!!!!",
+								'date_posted': 'May,25 2020'
+							}
+						]
+
+						# Create your views here.
+						def home(request):
+							context={
+								'posts':posts
+							}
+							return render(request,'blog/home.html',context)
+
+						def about(request):
+								return render(request,'blog/about.html',{'title':"About"})
+
+5.Go to home.html
+		<!DOCTYPE html>
+			<html lang="en">
+			<head>
+				<meta charset="UTF-8">
+				{% if title %}
+					<title>Django -{{ title }}</title>
+				{% else %}
+					<title>Django -Blog</title>
+				{% endif %}
+
+			</head>
+			<body>
+				{% for post in posts %}
+					<h1>{{ post.title }}</h1>
+					<p>By {{post.author}} posted on {{post.date_posted}}</p>
+					<p>{{post.content}}</p>
+				{% endfor %}
+
+
+			</body>
+			</html>
+			
+6.Create base.html
+				<!DOCTYPE html>
+					<html lang="en">
+					<head>
+						<meta charset="UTF-8">
+					   {% if title %}
+							<title>Django -{{ title }}</title>
+						{% else %}
+							<title>Django -Blog</title>
+						{% endif %}
+					</head>
+					<body>
+						{% block content %} {% endblock %}
+
+					</body>
+					</html>
+7.home.html becomes:
+						{% extends "blog/base.html" %}
+							{% block content %}
+								{% for post in posts %}
+									<h1>{{ post.title }}</h1>
+									<p>By {{post.author}} posted on {{post.date_posted}}</p>
+									<p>{{post.content}}</p>
+								{% endfor %}
+						{	% endblock content %}
+8.about.html becomes:
+				{% extends "blog/base.html" %}
+					{% block content %}
+							<h1>Blog About!!!!!!!!!!</h1>
+					{% endblock content %}
+9.Copy the contents from https://getbootstrap.com/docs/4.0/getting-started/introduction/#starter-template --><head>  and javascript to base.html,now create a <div class="container">place the content block</div>
+
+10.Copy the contents from https://github.com/CoreyMSchafer/code_snippets/blob/master/Django_Blog/snippets/navigation.html  and https://github.com/CoreyMSchafer/code_snippets/blob/master/Django_Blog/snippets/main.html to base.html
+
+11.Create a dir static under blog folder with blog as sub dir,create main.css under blog folder and copy contents from https://github.com/CoreyMSchafer/code_snippets/blob/master/Django_Blog/snippets/main.css to main.css
+12 In base.html at the start {% load static %} and then create a link with href="{% static 'blog/main.css' %}"
+13.Copy the <article> tage from  and https://github.com/CoreyMSchafer/code_snippets/blob/master/Django_Blog/snippets/article and paste it in home.html
+				{% extends "blog/base.html" %}
+					{% block content %}
+
+						{% for post in posts %}
+							<article class="media content-section">
+							  <div class="media-body">
+								<div class="article-metadata">
+								  <a class="mr-2" href="#">{{ post.author }}</a>
+								  <small class="text-muted">{{ post.date_posted }}</small>
+								</div>
+								<h2><a class="article-title" href="#">{{ post.title }}</a></h2>
+								<p class="article-content">{{ post.content }}</p>
+							  </div>
+							</article>
+						{% endfor %}
+				{% endblock content %}
+				
+14.Go to base.html and change the default hrefs in nav tag to {% url 'blog-home' %} for home and {% url 'blog-about' %} for about.		
+=========================================================================================================================================
+Create a database---add users:
+Stop the development server
+	1.python3 manage.py makemigrations
+	2.python3 manage.py migrate
+	3.python3 manage.py createsuperuser
+	Enter:user1
+	email:shreya.vernekar12@gmail.com
+	password:user1
+Gor to admin  and login  as user1 create another user2 ,check for the recent actions,explore tthe page.
+
+========================================================================================================================================================================================
+Create models for Posts in models.py
+			from django.db import models
+			from django.utils import timezone
+			from django.contrib.auth.models import User
+
+			class Posts(models.Model):
+				title=models.CharField(max_length=100)
+				content=models.TextField()
+				date_posted=models.DateTimeField(default=timezone.now)
+				author=models.ForeignKey(User,on_delete=models.CASCADE)
+				
+				def __str__(self):
+					return self.title
+Goto command prompt:python manage.py makemigrations:
+					Migrations for 'blog':
+					blog/migrations/0001_initial.py
+							- Create model Posts
+python manage.py sqlmigrate blog 0001							
+	BEGIN;
+		--
+		-- Create model Posts
+		--
+		CREATE TABLE "blog_posts" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "title" varchar(100) NOT NULL, "content" text NOT NULL, "date_posted" datetime NOT NULL, "author_id" integer NOT NULL REFERENCES "auth_user" ("id") DEFERRABLE INITIALLY DEFERRED);
+		CREATE INDEX "blog_posts_author_id_6f561d00" ON "blog_posts" ("author_id");
+		COMMIT;
+python manage.py migrate
+		Operations to perform:
+		  Apply all migrations: admin, auth, blog, contenttypes, sessions
+		Running migrations:
+		  Applying blog.0001_initial... OK
+python manage.py shell
+>>> from blog.models import Posts
+>>> from django.contrib.auth.models import User
+>>> User.objects.all()
+<QuerySet [<User: user1>, <User: user2>]>
+>>> 
+>>> User.objects.first()
+<User: user1>
+>>> User.objects.filter(username='user1')
+<QuerySet [<User: user1>]>
+>>> User.objects.filter(username='user1').first()
+<User: user1>
+>>> user=User.objects.filter(username='user1').first()
+>>> user
+<User: user1>
+>>> user.id
+1
+>>> user.pk
+1
+>>> user=User.objects.get(id=1)
+>>> user
+<User: user1>
+>>> Posts.objects.all()
+<QuerySet []>
+>>> posts_1=Posts(title='Blog-1',content="My first Post",author=user)
+>>> Posts.objects.all()
+<QuerySet []>
+>>> posts_1
+<Posts: Posts object (None)>
+>>> posts_1
+<Posts: Posts object (None)>
+>>> posts_1.save()
+>>> Posts.objects.all()
+<QuerySet [<Posts: Posts object (1)>]>
+>>> exit()
+(venv) vernekar@vernekar-VirtualBox:~/blogproj/blog_project$ python manage.py shell
+Python 3.7.5 (default, Nov  7 2019, 10:50:52) 
+[GCC 8.3.0] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+(InteractiveConsole)
+>>> from blog.models import Posts
+>>> from django.contrib.auth.models import User
+>>> Posts.objects.all()
+<QuerySet [<Posts: Blog-1>]>
+>>> user=User.objects.filter(username='user1').first()
+>>> user
+<User: user1>
+>>> posts_2=Posts(title='Blog-2',content='My second content',author=user)
+>>> posts_2.save()
+>>> Posts.objects.all()
+<QuerySet [<Posts: Blog-1>, <Posts: Blog-2>]>
+>>> post=Posts.objects.first()
+>>> post.author
+<User: user1>
+>>> post.author.email
+'shreya.vernekar12@gmail.com'
+>>> post.content
+'My first Post'
+>>> user.post_set.all()
+Traceback (most recent call last):
+  File "<console>", line 1, in <module>
+AttributeError: 'User' object has no attribute 'post_set'
+>>> user.posts_set.all()
+<QuerySet [<Posts: Blog-1>, <Posts: Blog-2>]>
+>>> user.posts_set.create(title='Blog-3',content='My third content',author=user)
+<Posts: Blog-3>
+exit()
+------------------------------------------------
+Now lets use this database:
+Go to views.py and import the Posts model and context from database
+from django.shortcuts import render
+from .models import Posts
+
+# Create your views here.
+def home(request):
+    context={
+        'posts':Posts.objects.all()
+    }
+    return render(request,'blog/home.html',context)
+
+def about(request):
+    return render(request,'blog/about.html',{'title':"About"})
+	
+	
+	
+Now go to home.html  and cahnge the date_psoted format <small class="text-muted">{{ post.date_posted |date:'F d,Y' }}</small>	
+
+Gooto admin.py 
+	from django.contrib import admin
+	from .models import Posts
+
+	admin.site.register(Posts)
+Goto admin site and check the Posts appear on the admin page ,change the required contents as per the  need and verify if its working,Ex change the blog3 user to user2
+	
+	
+	
+
+
+	
+
+
+
+		
+
+
+		
+		
+	
+	
