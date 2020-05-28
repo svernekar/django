@@ -296,10 +296,91 @@ Gooto admin.py
 
 	admin.site.register(Posts)
 Goto admin site and check the Posts appear on the admin page ,change the required contents as per the  need and verify if its working,Ex change the blog3 user to user2
-	
-	
-	
+=========================================================================================================================================================
+create a user app :python manage.py startapp users
+Goto settings.py of App and Add
+INSTALLED_APPS = [
+    'users.apps.UsersConfig',
+    'blog.apps.BlogConfig',
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+]
 
+Goto views.py and add below:
+from django.shortcuts import render
+from django.contrib.auth.forms import UserCreationForm
+
+def register(request):
+    form=UserCreationForm()
+    return render(request, 'users/register.html', {'form' : form})
+Create templste under template/users/register.html
+	{% extends "blog/base.html" %}
+	{% block content %}
+
+		<div class="content-section">
+			<form method="POST">
+				{% csrf_token %}
+				<fieldset class="form-group">
+					<legend class="border-bottom" mb-4> Join Today </legend>
+					{{ form }}
+				</fieldset>
+				<div class="form-group">
+					<button class="btn btn-outline-info" type="submit">Sign Up</button>
+				</div>
+			</form>
+			<div class="border-top pt-3">
+				<small class="text-muted">
+					Already have an account?<a class="ml-2" href="#">Sign In</a>
+				</small>
+			</div>
+
+		</div>
+	{% endblock content %}
+Got to urls.py in project :
+from django.contrib import admin
+from django.urls import path, include
+from users import views as users_views
+
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('register/',users_views.register,name='register'),
+    path('blog/', include('blog.urls')),
+
+]
+
+Goto views.py:
+from django.shortcuts import render,redirect
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib import messages
+
+
+def register(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            messages.success(request,f'Account created for {username}!')
+            return redirect('blog-home')
+    else:
+        form=UserCreationForm()
+
+    return render(request, 'users/register.html', {'form': form})
+
+	
+	
+Now goto base.html and paste the below above the code block
+{% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{message}}
+                    </div>
+                {% endfor %}
+            {% endif %}
 
 	
 
